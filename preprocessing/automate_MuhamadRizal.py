@@ -1,59 +1,57 @@
 import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 
-def load_data(file_path):
-    """Membaca dataset mentah Iris."""
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Dataset tidak ditemukan di {file_path}")
-    return pd.read_csv(file_path)
-
-def pipeline_preprocessing(df):
-    """Menjalankan tahapan preprocessing sesuai dengan 6 kolom di screenshot Anda."""
-    # 1. Menghapus kolom Id karena tidak dipakai untuk training
-    if 'Id' in df.columns:
-        df = df.drop(columns=['Id'])
-        
-    # 2. Memisahkan Fitur (X) dan Target (y)
-    X = df[['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm']]
-    y = df['Species']
+def run_automated_preprocessing():
+    print("=== Memulai Proses Otomatisasi Preprocessing ===")
     
-    # 3. Standardisasi (Scaling) Fitur Numerik
-    scaler = StandardScaler()
-    X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
+    # 1. Definisikan Jalur Berkas (Path) secara Dinamis
+    # Menggunakan basePath agar aman saat dieksekusi di komputer lokal maupun GitHub Actions Runner
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
-    # 4. Melakukan Train-Test Split (80:20) dengan Stratify agar proporsi spesies seimbang
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_scaled, y, test_size=0.2, random_state=42, stratify=y
-    )
+    # Menyesuaikan dengan nama folder di screenshot panduan Anda
+    raw_data_dir = os.path.join(base_dir, 'namadataset_raw')
+    output_dir = os.path.join(base_dir, 'preprocessing', 'namadataset_preprocessing')
     
-    # Menggabungkan kembali menjadi Dataframe utuh siap pakai
-    train_df = pd.concat([X_train, y_train.reset_index(drop=True)], axis=1)
-    test_df = pd.concat([X_test, y_test.reset_index(drop=True)], axis=1)
-    
-    return train_df, test_df
-
-def save_processed_data(train_df, test_df, output_dir):
-    """Menyimpan hasil preprocessing ke folder tujuan."""
+    # Pastikan folder output dibuat otomatis jika belum ada di server GitHub
     os.makedirs(output_dir, exist_ok=True)
     
-    train_path = os.path.join(output_dir, 'iris_train_processed.csv')
-    test_path = os.path.join(output_dir, 'iris_test_processed.csv')
+    # Ambil berkas CSV pertama yang ada di dalam folder namadataset_raw
+    try:
+        raw_files = [f for f in os.listdir(raw_data_dir) if f.endswith('.csv')]
+        if not raw_files:
+            raise FileNotFoundError("Tidak ditemukan berkas CSV di dalam folder 'namadataset_raw'!")
+        
+        raw_file_path = os.path.join(raw_data_dir, raw_files[0])
+        print(f"Membaca data mentah dari: {raw_file_path}")
+        df = pd.read_csv(raw_file_path)
+    except Exception as e:
+        print(f"Error saat membaca data mentah: {str(e)}")
+        return
+
+    # 2. Proses Pembersihan Data (Handling Missing Values / NaN)
+    print("Membersihkan nilai kosong (NaN)...")
+    # Mengisi nilai NaN pada kolom numerik dengan nilai rata-rata (mean)
+    numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+    df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
     
-    train_df.to_csv(train_path, index=False)
-    test_df.to_csv(test_path, index=False)
-    print(f"Sukses! Data Iris hasil preprocessing disimpan di: {output_dir}")
+    # Jika ada kolom teks yang kosong, isi dengan modus atau drop
+    df = df.dropna()
+
+    # 3. Pembagian Data (Data Splitting) - Syarat Utama Kriteria 1
+    print("Melakukan pembagian data menjadi Train dan Test (Rasio 80:20)...")
+    train_df, test_df = train_test_split(df, test_split=0.2, random_state=42)
+
+    # 4. Menyimpan Hasil Ekstraksi ke Folder Preprocessing
+    train_output_path = os.path.join(output_dir, 'iris_train_processed.csv')
+    test_output_path = os.path.join(output_dir, 'iris_test_processed.csv')
+    
+    train_df.to_csv(train_output_path, index=False)
+    test_df.to_csv(test_output_path, index=False)
+    
+    print(f"🎉 Sukses menyimpan data train ke: {train_output_path}")
+    print(f"🎉 Sukses menyimpan data test ke: {test_output_path}")
+    print("=== Proses Preprocessing Selesai ===")
 
 if __name__ == "__main__":
-    # Pastikan nama file CSV dari Kaggle disesuaikan di folder namadataset_raw
-    INPUT_FILE = "namadataset_raw/Iris.csv" 
-    OUTPUT_DIR = "preprocessing/namadataset_preprocessing"
-    
-    print("Memulai otomatisasi preprocessing dataset Iris...")
-    try:
-        raw_data = load_data(INPUT_FILE)
-        train_data, test_data = pipeline_preprocessing(raw_data)
-        save_processed_data(train_data, test_data, OUTPUT_DIR)
-    except Exception as e:
-        print(f"Terjadi kesalahan saat preprocessing: {e}")
+    run_automated_preprocessing()
