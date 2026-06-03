@@ -1,4 +1,4 @@
-name: Automated Data Preprocessing
+name: Machine Learning CI Pipeline
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  preprocess:
+  ml_ci:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,12 +24,14 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas scikit-learn
+        pip install mlflow pandas scikit-learn dagshub
 
-    - name: Run Preprocessing Script
+    # Menggunakan modul python agar perintah mlflow dikenali oleh server GitHub
+    - name: Run MLflow Project (Re-training)
       run: |
-        python preprocessing/automate_MuhamadRizal.py
+        python -m mlflow run . --no-conda
 
-    - name: Verify Output Files
+    # Menggunakan modul python untuk membungkus model menjadi Docker Image
+    - name: Build Docker Image from MLflow Model
       run: |
-        ls -la preprocessing/namadataset_preprocessing/
+        python -m mlflow models build-docker -m "runs:/CI_Automated_Run/model" -n "pyrall0712/iris-model-api:latest" --enable-mlserver
