@@ -40,7 +40,7 @@ def run_automated_preprocessing():
 
     # 3. Pembagian Data (Data Splitting) - Syarat Utama Kriteria 1
     print("Melakukan pembagian data menjadi Train dan Test (Rasio 80:20)...")
-    train_df, test_df = train_test_split(df, test_split=0.2, random_state=42)
+    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
 
     # 4. Menyimpan Hasil Ekstraksi ke Folder Preprocessing
     train_output_path = os.path.join(output_dir, 'iris_train_processed.csv')
