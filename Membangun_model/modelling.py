@@ -28,25 +28,26 @@ def train_baseline():
     mlflow.set_experiment("Iris_Classification_Baseline")
     
     # 4. Memulai Recording Eksperimen ke DagsHub
-    with mlflow.start_run(run_name="Random_Forest_Baseline"):
-        # Parameter dasar model
-        n_estimators = 100
-        max_depth = None
-        
-        # Training Model
-        model = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
+    with mlflow.start_run(run_name="CI_Automated_Run"):
+        model = RandomForestClassifier(random_state=42)
         model.fit(X_train, y_train)
         
-        # Evaluasi Akurasi
         y_pred = model.predict(X_test)
         acc = accuracy_score(y_test, y_pred)
         
-        # 5. MENULIS MANUAL LOGGING (Syarat Mutlak Advance)
-        mlflow.log_param("n_estimators", n_estimators)
-        mlflow.log_param("max_depth", "None")
+        # Logging parameter dan metrik
+        mlflow.log_param("n_estimators", 100)
         mlflow.log_metric("accuracy", acc)
         
-        print(f"Berhasil! Akurasi Baseline Model: {acc:.4f}")
+        # BARIS PERBAIKAN: Paksa sklaern untuk mencatat model ke sub-folder "model"
+        # Menambahkan input_example atau signature opsional agar MLflow mencatatnya sebagai model valid
+        mlflow.sklearn.log_model(
+            sk_model=model, 
+            artifact_path="model",
+            registered_model_name="Iris_RandomForest_Model"
+        )
+        
+        print(f"Berhasil! Akurasi Model: {acc:.4f}")
 
 if __name__ == "__main__":
     train_baseline()
