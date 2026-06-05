@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/675145566123544754/3403e7e685c34fed935df6d96cb43696/artifacts
+end_time: 1780658579961
+entry_point_name: ''
+experiment_id: '675145566123544754'
+lifecycle_stage: active
+run_id: 3403e7e685c34fed935df6d96cb43696
+run_name: Random Forest
+run_uuid: 3403e7e685c34fed935df6d96cb43696
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1780658572019
+status: 3
+tags: []
+user_id: alfin
